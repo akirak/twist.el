@@ -51,7 +51,7 @@
      "Name" 20 t)
     (version
      version
-     "Version" 8 nil
+     "Version" 9 nil
      :right-align t)
     (owner
      (origin owner)
@@ -73,7 +73,7 @@
      "Author" 27 t)
     (inventoryType
      (inventory type)
-     "Type" 8 t)
+     "Type" 10 t)
     (summary
      (meta description)
      "Summary" 25 nil))
