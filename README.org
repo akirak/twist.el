@@ -1,10 +1,10 @@
 * Twist.el
-Twist.el is an Emacs frontend to [[https://github.com/akirak/emacs-twist][Twist]], an alternative Nix machinery that builds Emacs Lisp packages.
+Twist.el is an Emacs frontend to [[https://github.com/akirak/emacs-twist][Twist]], an alternative machinery for Nix that builds Emacs Lisp packages.
 It lets you inspect (i.e. browse and review) packages in a configuration.
 
 The goal of twist.el is as follows:
 
-- Improve user experiences of Twist. Help update packages in Twist configurations securely and efficiently.
+- Improve user experiences of Twist. Help update packages in Twist securely and efficiently.
 - Provide a nice feedback loop for quality-checking Emacs Lisp packages. A user of Twist can be both a package user and a developer at the same time.
 
 Twist and twist.el constitute a package manager for Emacs, which can be considered an alternative to Emacs package managers such as package.el, [[https://github.com/raxod502/straight.el][straight.el]], and [[https://github.com/emacscollective/borg][borg/emacscollective]].
