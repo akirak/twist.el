@@ -1,0 +1,36 @@
+* Twist.el
+Twist.el is an Emacs frontend to [[https://github.com/akirak/emacs-twist][Twist]], an alternative Nix machinery that builds Emacs Lisp packages.
+It lets you inspect (i.e. browse and review) packages in a configuration.
+
+The goal of twist.el is as follows:
+
+- Improve user experiences of Twist. Help update packages in Twist configurations securely and efficiently.
+- Provide a nice feedback loop for quality-checking Emacs Lisp packages. A user of Twist can be both a package user and a developer at the same time.
+
+Twist and twist.el constitute a package manager for Emacs, which can be considered an alternative to Emacs package managers such as package.el, [[https://github.com/raxod502/straight.el][straight.el]], and [[https://github.com/emacscollective/borg][borg/emacscollective]].
+
+As a package manager, Twist is security-oriented compared to the others in the following aspects:
+
+- Twist locks every Emacs package in a lock file. You can update individual packages rather than update all packages.
+- Twist builds packages in a Nix sandbox. If there were some malicious code that were intended to be run during byte-compilation, it would probably fail because of restrictions of the sandbox. The same can be said for non-elisp code shipped with the package.
+- It *doesn't* load a package when you first add it to your configuration. This is less interactive, but is more secure. You could easily run static checkers on a produced artifact before you load it into your session.
+
+In Twist, a configuration is a Nix flake package. Twist.el can open any configuration that is a local flake, so you can inspect a configuration from outside.
+You can also browse a configuration of someone else without running it, if the configuration is in Twist.
+It has a potential to become a tinkering tool.
+
+The lock file format of Twist is =flake.lock=, which is becoming common in Nix communities.
+Once we get an interactive Emacs frontend for updating =flake.lock=, you will be able to update packages in your Twist configuration efficiently.
+Until then, you can use =nix flake= command.
+
+Twist is currently an alpha, so is Twist.el.
+** Screenshots
+[[file:screenshots/twist-list-packages.png][file:screenshots/twist-list-packages.png]]
+
+[[file:screenshots/twist-describe-package.png][file:screenshots/twist-describe-package.png]]
+** Usage
+Run =twist-connect= to open a flake package on your file system.
+Use =twist-list-packages= to browse packages, and use =twist-describe-package= to view information of a package.
+
+Twist.el relies on a =nix repl= session, and many commands are flaky at the moment.
+You may get a successful result by running the same command again.
