@@ -11,7 +11,7 @@ Twist and twist.el constitute a package manager for Emacs, which can be consider
 
 As a package manager, Twist is security-oriented compared to the others in the following aspects:
 
-- Twist locks every Emacs package in a lock file. You can update individual packages rather than update all packages.
+- Twist locks every Emacs package in a lock file. You can update individual packages rather than update all packages. See [[https://www.reddit.com/r/emacs/comments/81jqim/emacs_packages_security/][why this is important]].
 - Twist builds packages in a Nix sandbox. If there were some malicious code that were intended to be run during byte-compilation, it would probably fail because of restrictions of the sandbox. The same can be said for non-elisp code shipped with the package.
 - It *doesn't* load a package when you first add it to your configuration. This is less interactive, but is more secure. You could easily run static checkers on a produced artifact before you load it into your session.
 
