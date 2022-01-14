@@ -1,0 +1,112 @@
+{
+  "nodes": {
+    "dash": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1632096711,
+        "narHash": "sha256-oeIUEe5OGgij6IessN6bmS7re5r+D5BlrU4MOsaK3JE=",
+        "owner": "magnars",
+        "repo": "dash.el",
+        "rev": "da167c51e9fd167a48d06c7c0ee8e3ac7abd9718",
+        "type": "github"
+      },
+      "original": {
+        "owner": "magnars",
+        "repo": "dash.el",
+        "type": "github"
+      }
+    },
+    "elx": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1631975782,
+        "narHash": "sha256-RDu2+HKg9OcqIIOPN0H6x5ML0VICPgHroBkNv2tv4Bg=",
+        "owner": "emacscollective",
+        "repo": "elx",
+        "rev": "a457a596401dc5caa9c9a2ebb627bd4af0607780",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacscollective",
+        "repo": "elx",
+        "type": "github"
+      }
+    },
+    "magit-section": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1641899817,
+        "narHash": "sha256-y1qiKyWmHxZA3U9MWgVmGH0tfhm5gBexPGZFuaJNQ1k=",
+        "owner": "magit",
+        "repo": "magit",
+        "rev": "0ac05f39624d1d8f2cd6cb2d2f1aa2e387a9c70a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "magit",
+        "repo": "magit",
+        "type": "github"
+      }
+    },
+    "nix-mode": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1637425663,
+        "narHash": "sha256-RJWMoZRlYElcPhNVNe8HfvGeoeQvn0Yi8mfMh0K272c=",
+        "owner": "NixOS",
+        "repo": "nix-mode",
+        "rev": "3d04d92d9c3896d07bc9fed7e4f40032025fbe7b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nix-mode",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "dash": "dash",
+        "elx": "elx",
+        "magit-section": "magit-section",
+        "nix-mode": "nix-mode",
+        "transient": "transient",
+        "twist": "twist"
+      }
+    },
+    "transient": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1641992745,
+        "narHash": "sha256-eYumbeOeZN+rI5rL0ql3MoDv9l2azIr9LMiAlFMzp8E=",
+        "owner": "magit",
+        "repo": "transient",
+        "rev": "b466cd9aab399cd21c16454bfd0e6d9f84c908e4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "magit",
+        "repo": "transient",
+        "type": "github"
+      }
+    },
+    "twist": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1642137036,
+        "narHash": "sha256-N5xgKwxY8Vz60sgLzYYoS4BiJWvaIQRGzkGlID2luEM=",
+        "owner": "akirak",
+        "repo": "twist.el",
+        "rev": "5bb2f01ffb2e7dbbb286ff07e312d046555e3a1d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "akirak",
+        "repo": "twist.el",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
