@@ -392,7 +392,8 @@ This is a helper macro for traversing a tree."
                                 'contributing)))
 
       (dolist (output (or twist-package-outputs
-                          (twist-session-package-outputs ename)))
+                          (mapcar (lambda (x) (cons x nil))
+                                  (twist-session-package-outputs ename))))
         (unless (equal (car output) "out")
           (pcase-let ((`(,label ,subdir ,find-file-fn)
                        (pcase (car output)
