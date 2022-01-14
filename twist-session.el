@@ -173,9 +173,7 @@
   ;; only local flakes:
   ;;
   ;; *** Eval error ***  JSON readtable error: 101
-  (insert ":lf " flake)
-  (comint-send-input)
-  (twist-session--accept-output)
+  (twist-session--send-command (concat ":lf " flake))
 
   (prog1 (setq-local twist-session-loaded-time (current-time)
                      twist-session-flake flake)
@@ -184,13 +182,17 @@
 (defun twist-session--reload-flake ()
   "Reload the current flake."
   (twist-session--clear)
-  (insert ":r")
-  (comint-send-input)
-  (twist-session--accept-output)
+  (twist-session--send-command ":r")
   (twist-session--load-flake twist-session-flake))
 
 (defun twist-session-reload ()
   (twist-session--with-live-buffer t))
+
+(defun twist-session--send-command (command &optional timeout)
+  "Send a command to the nix repl session and ignore its output."
+  (insert command)
+  (comint-send-input)
+  (twist-session--accept-output timeout))
 
 (defun twist-session--eval (input &optional timeout)
   "Evaluate INPUT and return its result, with optional TIMEOUT."
@@ -363,9 +365,7 @@ Optionally, you can override arguments passed to
   "Finish the current twist session."
   (if (twist-session-process-live-p)
       (with-current-buffer twist-session-buffer
-        (insert ":q")
-        (comint-send-input)
-        (twist-session--accept-output)
+        (twist-session--send-command ":q")
         (twist-session--clear)
         (message "Finished the twist session"))
     (unless no-error
