@@ -226,13 +226,18 @@ information of a package."
 
     (when twist-package-do-build
       (unless twist-package-outputs
-        (when (setq twist-package-outputs
-                    (with-timeout (0.3)
-                      (twist-session-build-package (alist-get 'ename data) #'identity)))
-          (setq twist-package-build-status 'success))))
+        (condition-case-unless-debug _
+            (when (setq twist-package-outputs
+                        (with-timeout (0.3)
+                          (twist-session-build-package (alist-get 'ename data) #'identity)))
+              (setq twist-package-build-status 'success))
+          (error (setq twist-package-build-status 'failed)))))
 
     (magit-insert-section ('package)
-      (run-hook-with-args 'twist-package-sections data))))
+      (run-hook-with-args 'twist-package-sections data))
+
+    (when (eq twist-package-build-status 'failed)
+      (message "Package failed to build"))))
 
 (define-derived-mode twist-package-mode magit-section-mode
   "Twist Package"
