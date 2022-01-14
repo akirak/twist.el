@@ -172,7 +172,7 @@ information of a package."
 (define-button-type 'twist-package-output
   :supertype 'help-xref
   'help-function 'twist-package-find-file-in-output
-  'help-echo (purecopy "mouse-2, RET: Browse the info file"))
+  'help-echo (purecopy "mouse-2, RET: Browse the file in the output"))
 
 (define-button-type 'twist-package-output-dir
   :supertype 'help-xref
