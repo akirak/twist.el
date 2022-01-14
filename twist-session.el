@@ -78,7 +78,7 @@
   "Return the flake of the current/last session."
   (buffer-local-value 'twist-session-flake twist-session-buffer))
 
-(defun twist-session-package ()
+(defun twist-session-config-package ()
   "Return the package name of the current/last session."
   (twist-session--last-attr
    (buffer-local-value 'twist-session-eval-root twist-session-buffer)))
@@ -96,7 +96,7 @@
       (let ((proc (get-buffer-process twist-session-buffer)))
         (message "%s#%s, %s"
                  (twist-session-flake)
-                 (twist-session-package)
+                 (twist-session-config-package)
                  (if (and proc (process-live-p proc))
                      "active"
                    "inactive")))
@@ -107,7 +107,7 @@
   (if (twist-session-process-live-p)
       (user-error "There is a live session of Twist")
     (twist-session-open (twist-session-flake)
-                        (twist-session-package))))
+                        (twist-session-config-package))))
 
 (defmacro twist-session-ensure (&rest progn)
   `(if (twist-session-process-live-p)
