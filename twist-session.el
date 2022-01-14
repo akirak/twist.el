@@ -104,10 +104,14 @@
 
 (defun twist-session-reopen ()
   "Re-open the previously running session."
-  (if (twist-session-process-live-p)
-      (user-error "There is a live session of Twist")
+  (cond
+   ((twist-session-process-live-p)
+    (user-error "There is a live session of Twist"))
+   (twist-session-buffer
     (twist-session-open (twist-session-flake)
-                        (twist-session-config-package))))
+                        (twist-session-config-package)))
+   (t
+    (user-error "No information on the previous session is available"))))
 
 (defmacro twist-session-ensure (&rest progn)
   `(if (twist-session-process-live-p)
