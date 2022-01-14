@@ -34,3 +34,7 @@ Use =twist-list-packages= to browse packages, and use =twist-describe-package= t
 
 Twist.el relies on a =nix repl= session, and many commands are flaky at the moment.
 You may get a successful result by running the same command again.
+*** Bookmark integration
+Twist.el integrates with the default bookmark system of Emacs.
+You can create a bookmark in the package list buffer and package buffers, and you can use the bookmark to revisit its original buffer.
+Bookmarks are specific to flakes.
