@@ -31,9 +31,12 @@
 ;;; Code:
 
 (require 'twist-session)
+(require 'twist-bookmark)
 
 (require 'tabulated-list)
 (require 'map)
+
+(defvar bookmark-make-record-function)
 
 ;; TODO: Use tablist once it becomes active again.
 ;;
@@ -127,20 +130,21 @@ It works on `twist-comint-buffer' which should be created by
   `twist-session-open'."
   (interactive "P")
   (twist-session-ensure
-    (let ((default-directory (twist-session-directory)))
-      (with-current-buffer (get-buffer-create twist-packages-buffer)
-        (twist-packages-mode)
-        (twist-packages-set-columns twist-packages-default-columns)
-        (setq tabulated-list-entries
-              (lambda ()
-                (let ((hash (twist-session-packages)))
-                  (prog1 (map-apply (lambda (ename data)
-                                      (list ename (funcall twist-packages-row-fn data)))
-                                    hash)
-                    (message "%s packages in the configuration"
-                             (map-length hash))))))
-        (twist-packages-refresh)
-        (switch-to-buffer (current-buffer))))))
+   (let ((default-directory (twist-session-directory)))
+     (with-current-buffer (get-buffer-create twist-packages-buffer)
+       (twist-packages-mode)
+       (twist-packages-set-columns twist-packages-default-columns)
+       (setq tabulated-list-entries
+             (lambda ()
+               (let ((hash (twist-session-packages)))
+                 (prog1 (map-apply (lambda (ename data)
+                                     (list ename (funcall twist-packages-row-fn data)))
+                                   hash)
+                   (message "%s packages in the configuration"
+                            (map-length hash))))))
+       (twist-packages-refresh)
+       (setq-local bookmark-make-record-function #'twist-packages-bookmark-record)
+       (switch-to-buffer (current-buffer))))))
 
 (defun twist-packages-set-columns (column-ids)
   "Set the columns to COLUMN-IDS."
@@ -178,6 +182,11 @@ It works on `twist-comint-buffer' which should be created by
   "Describe PACKAGE at point."
   (interactive (list (tabulated-list-get-id)))
   (pop-to-buffer (twist-package-buffer package)))
+
+;;;; Extra features
+
+(defun twist-packages-bookmark-record ()
+  (twist-bookmark-make-record nil 'packages))
 
 (provide 'twist-packages)
 ;;; twist-packages.el ends here

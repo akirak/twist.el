@@ -31,11 +31,14 @@
 ;;; Code:
 
 (require 'twist-session)
+(require 'twist-bookmark)
+
 (require 'magit-section)
 (require 'elx)
 
 (declare-function epkg-list-packages-by-author "ext:epkg")
 (defvar thing-at-point-email-regexp)
+(defvar bookmark-make-record-function)
 
 (defgroup twist-package nil
   "Show package information in a buffer."
@@ -209,6 +212,7 @@ information of a package."
           (setq twist-package-ename ename)
           (twist-package--insert-contents data)
           (goto-char (point-min))
+          (setq-local bookmark-make-record-function #'twist-package-bookmark-record)
           (current-buffer))
       (user-error "Library %s is not a package in the configuration" ename))))
 
@@ -645,6 +649,11 @@ Otherwise, it inserts a text."
                                                             (< (length a) (length b)))))
                                  (car files))
                                path))))
+
+;;;; Extra features
+
+(defun twist-package-bookmark-record ()
+  (twist-bookmark-make-record nil 'package twist-package-ename))
 
 (provide 'twist-package)
 ;;; twist-package.el ends here
