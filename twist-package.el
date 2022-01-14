@@ -221,17 +221,19 @@ information of a package."
     (twist-package--insert-contents (twist-session-package twist-package-ename))))
 
 (defun twist-package--insert-contents (data)
-  (let ((inhibit-read-only t))
+  (let ((inhibit-read-only t)
+        (ename (alist-get 'ename data)))
     (erase-buffer)
 
     (when twist-package-do-build
       (unless twist-package-outputs
-        (condition-case-unless-debug _
+        (condition-case-unless-debug err
             (when (setq twist-package-outputs
                         (with-timeout (0.3)
-                          (twist-session-build-package (alist-get 'ename data) #'identity)))
+                          (twist-session-build-package ename)))
               (setq twist-package-build-status 'success))
-          (error (setq twist-package-build-status 'failed)))))
+          (twist-session-build-errors
+           (setq twist-package-build-status 'failed)))))
 
     (magit-insert-section ('package)
       (run-hook-with-args 'twist-package-sections data))
@@ -631,13 +633,13 @@ Otherwise, it inserts a text."
       (epkg-list-packages-by-author author-or-email)
     (user-error "Package epkg is required to use this feature")))
 
-(defun twist-package-build (ename dest-buffer)
-  (twist-session-build-package ename
-    (lambda (result)
-      (with-current-buffer dest-buffer
-        (setq twist-package-build-status 'success
-              twist-package-outputs result)
-        (revert-buffer)))))
+;; (defun twist-package-build (ename dest-buffer)
+;;   (twist-session-build-package ename
+;;     (lambda (result)
+;;       (with-current-buffer dest-buffer
+;;         (setq twist-package-build-status 'success
+;;               twist-package-outputs result)
+;;         (revert-buffer)))))
 
 (defun twist-package-browse-output-dir (store &optional dir _fn)
   (dired (if dir

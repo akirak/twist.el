@@ -325,7 +325,10 @@ Optionally, you can override arguments passed to
 
 (defvar twist-session-background-task nil)
 
-(defun twist-session-build-package (ename callback)
+(define-error 'twist-session-build-error "Package failed to build"
+  'twist-session-build-errors)
+
+(defun twist-session-build-package (ename)
   (declare (indent 1))
   (if twist-session-background-task
       (user-error "Build in progress")
@@ -352,8 +355,11 @@ Optionally, you can override arguments passed to
                                     nil t)
             (push (cons (match-string 1)
                         (match-string 2))
-                  result))))
-      (funcall callback result))))
+                  result)))
+        (when (and (not result)
+                   (re-search-forward (rx bol (* space) "error: builder for") nil t))
+          (signal 'twist-session-build-error (list ename)))
+        result))))
 
 ;;;; Clear cache data
 
