@@ -115,11 +115,13 @@
          ,@progn)
      (user-error "First start a session using `twist-connect'")))
 
-(defmacro twist-session--with-live-buffer (_reload &rest progn)
+(defmacro twist-session--with-live-buffer (reload &rest progn)
   "Evaluate PROGN on the comint buffer."
   (declare (indent 1))
   `(if (twist-session-process-live-p)
        (with-current-buffer twist-session-buffer
+         (when ,reload
+           (twist-session--reload-flake))
          ,@progn)
      (user-error "Twist session is closed or the process is dead")))
 
@@ -146,22 +148,12 @@
       (when dir
         (setq default-directory (file-name-as-directory flake)))
       (erase-buffer)
+      ;; Just in case the previous data exists
       (twist-session--clear)
-
       ;; Read initial output
       (twist-session--accept-output)
 
-      ;; I tried to use builtins.getFlake to support remote repositories, but
-      ;; somehow it failed with the following error. For now, I will support
-      ;; only local flakes:
-      ;;
-      ;; *** Eval error ***  JSON readtable error: 101
-      (insert ":lf " flake)
-      (comint-send-input)
-      (twist-session--accept-output)
-
-      (setq-local twist-session-loaded-time (current-time))
-      (message "Loaded a flake from %s for Twist" flake)
+      (twist-session--load-flake flake)
 
       (let* ((system (or twist-session-system
                          (setq twist-session-system (nix-system))))
@@ -170,10 +162,35 @@
                                            (twist-session--eval-complex
                                             (format "builtins.attrNames outputs.packages.%s"
                                                     system))))))
-        (setq-local twist-session-flake flake
-                    twist-session-eval-root (twist-session--make-eval-root
+        (setq-local twist-session-eval-root (twist-session--make-eval-root
                                              system package))))
     buffer))
+
+(defun twist-session--load-flake (flake)
+  "Load FLAKE into the current repl session."
+  ;; I tried to use builtins.getFlake to support remote repositories, but
+  ;; somehow it failed with the following error. For now, I will support
+  ;; only local flakes:
+  ;;
+  ;; *** Eval error ***  JSON readtable error: 101
+  (insert ":lf " flake)
+  (comint-send-input)
+  (twist-session--accept-output)
+
+  (prog1 (setq-local twist-session-loaded-time (current-time)
+                     twist-session-flake flake)
+    (message "Loaded a flake from %s for Twist" flake)))
+
+(defun twist-session--reload-flake ()
+  "Reload the current flake."
+  (twist-session--clear)
+  (insert ":r")
+  (comint-send-input)
+  (twist-session--accept-output)
+  (twist-session--load-flake twist-session-flake))
+
+(defun twist-session-reload ()
+  (twist-session--with-live-buffer t))
 
 (defun twist-session--eval (input &optional timeout)
   "Evaluate INPUT and return its result, with optional TIMEOUT."

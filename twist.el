@@ -71,6 +71,11 @@ the variable is nil, the user will choose a flake interactively."
   (interactive)
   (twist-session-reopen))
 
+(defun twist-reload ()
+  "Reload the current session."
+  (interactive)
+  (twist-session-reload))
+
 (defalias 'twist-describe-package #'twist-package)
 (defalias 'twist-list-packages #'twist-packages)
 
