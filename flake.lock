@@ -116,6 +116,21 @@
         "type": "github"
       }
     },
+    "nix-filter": {
+      "locked": {
+        "lastModified": 1641407557,
+        "narHash": "sha256-LRMVr6+dbmNv3I/8TepDoNsv0AaNR4/1R1qv0Okhtc8=",
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "rev": "bd03eb5242e707bc270f7a7e4f835b55713247ac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1642069818,
@@ -136,6 +151,7 @@
         "gnu-elpa": "gnu-elpa",
         "makem": "makem",
         "melpa": "melpa",
+        "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs",
         "twist": "twist",
         "utils": "utils"
