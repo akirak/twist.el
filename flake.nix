@@ -4,6 +4,7 @@
   inputs = {
     utils.url = "github:numtide/flake-utils";
     flake-utils-plus.url = "github:gytis-ivaskevicius/flake-utils-plus/v1.3.1";
+    nix-filter.url = "github:numtide/nix-filter";
 
     twist.url = "github:akirak/emacs-twist";
     melpa = {
@@ -34,6 +35,7 @@
     } @ inputs:
     let
       inherit (builtins) removeAttrs;
+      nix-filter = inputs.nix-filter.lib;
       mkApp = utils.lib.mkApp;
     in
     flake-utils-plus.lib.mkFlake {
@@ -56,7 +58,12 @@
           emacs = channels.nixpkgs.callPackage ./nix {
             makem = inputs.makem.outPath;
           } {
-            src = self.outPath;
+            src = nix-filter.filter {
+              root = ./.;
+              include = [
+                (nix-filter.matchExt "el")
+              ];
+            };
             inventories = [
               {
                 type = "elpa";
