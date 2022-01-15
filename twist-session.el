@@ -446,6 +446,15 @@ Optionally, you can override arguments passed to
       (with-current-buffer twist-session-buffer
         (twist-session--send-command ":q")
         (twist-session--clear)
+        (ignore-errors
+          ;; Close buffers
+          (dolist (buf (internal-complete-buffer
+                        "*twist"
+                        (lambda (name)
+                          (not (equal (if (consp name) (car name) name)
+                                      (buffer-name twist-session-buffer))))
+                        t))
+            (kill-buffer buf)))
         (message "Finished the twist session"))
     (unless no-error
       (user-error "Not connected"))))
