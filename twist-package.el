@@ -224,22 +224,20 @@ information of a package."
   (let ((inhibit-read-only t)
         (ename (alist-get 'ename data)))
     (erase-buffer)
+    (setq-local twist-package-outputs
+                (mapcar (lambda (x) (cons x nil))
+                        (twist-session-package-outputs ename)))
 
     (when twist-package-do-build
-      (unless twist-package-outputs
-        (condition-case-unless-debug err
-            (when (setq twist-package-outputs
-                        (with-timeout (0.3)
-                          (twist-session-build-package ename)))
-              (setq twist-package-build-status 'success))
-          (twist-session-build-errors
-           (setq twist-package-build-status 'failed)))))
+      (condition-case-unless-debug err
+          (when (setq twist-package-outputs
+                      (twist-session-build-package ename))
+            (setq twist-package-build-status 'success))
+        (twist-session-build-errors
+         (setq twist-package-build-status (cons 'failure err)))))
 
     (magit-insert-section ('package)
-      (run-hook-with-args 'twist-package-sections data))
-
-    (when (eq twist-package-build-status 'failed)
-      (message "Package failed to build"))))
+      (run-hook-with-args 'twist-package-sections data))))
 
 (define-derived-mode twist-package-mode magit-section-mode
   "Twist Package"
@@ -398,9 +396,7 @@ This is a helper macro for traversing a tree."
           (insert-source-button "CONTRIBUTING" twist-package-contributing-regexp
                                 'contributing)))
 
-      (dolist (output (or twist-package-outputs
-                          (mapcar (lambda (x) (cons x nil))
-                                  (twist-session-package-outputs ename))))
+      (dolist (output twist-package-outputs)
         (unless (equal (car output) "out")
           (pcase-let ((`(,label ,subdir ,find-file-fn)
                        (pcase (car output)
@@ -437,6 +433,14 @@ This is a helper macro for traversing a tree."
            (insert " ")
            (insert-text-button url 'type 'twist-package-url
                                'help-args (list url)))))
+      ("Build status:" twist-package-do-build
+       (pcase twist-package-build-status
+         ('success
+          (insert "Success"))
+         (`(failure ,_type ,dep . ,_)
+          (if (equal dep ename)
+              (insert "Failure")
+            (insert (format "Failure (because of %s)" dep))))))
       ("Output:" (cdr (assoc "out" twist-package-outputs))
        (let* ((dir (expand-file-name "share/emacs/site-lisp/"
                                      (cdr (assoc "out" twist-package-outputs))))
@@ -459,7 +463,6 @@ This is a helper macro for traversing a tree."
                                       'help-args (list dir file))
                   (insert " "))
                 (insert (string-join files-by-ext " ") " "))
-               ("elc")
                (_
                 (insert (propertize ext 'help-echo
                                     (string-join files-by-ext " "))

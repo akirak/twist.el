@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'twist-parse)
+
 (require 'nix)
 (require 'comint)
 (require 'map)
@@ -57,6 +59,8 @@
 (defvar-local twist-session-flake nil)
 (defvar-local twist-session-eval-root nil)
 (defvar-local twist-session-loaded-time nil)
+(defvar-local twist-session-build-errors nil)
+(defvar-local twist-session-emacs-name nil)
 
 (defun twist-session--make-eval-root (system package)
   (format "outputs.packages.%s.%s"
@@ -231,6 +235,7 @@
     ;; nix-repl echoes every user input to the terminal. Find the end of the
     ;; input and move the point to right after the echoed input.
     (search-forward input)
+
     ;; Skip whitespaces
     (when (looking-at (rx (+ space)))
       (goto-char (match-end 0)))
@@ -295,6 +300,10 @@ Optionally, you can override arguments passed to
         (setq twist-session-packages hash)
         alist)))
 
+(defun twist-session-emacs-name ()
+  (twist-session--with-live-buffer nil
+    (twist-session--eval (format "%s.emacs.name" twist-session-eval-root))))
+
 (defun twist-session-package (ename)
   "Return a list of elisp packages in the configuration."
   (gethash (cl-etypecase ename
@@ -328,6 +337,9 @@ Optionally, you can override arguments passed to
 (define-error 'twist-session-build-error "Package failed to build"
   'twist-session-build-errors)
 
+(define-error 'twist-session-dep-build-error "Package dependency failed to build"
+  'twist-session-build-errors)
+
 (defun twist-session-build-package (ename)
   (declare (indent 1))
   (if twist-session-background-task
@@ -356,10 +368,26 @@ Optionally, you can override arguments passed to
             (push (cons (match-string 1)
                         (match-string 2))
                   result)))
-        (when (and (not result)
-                   (re-search-forward (rx bol (* space) "error: builder for") nil t))
-          (twist-session--build-log ename)
-          (signal 'twist-session-build-error (list ename)))
+        ;; If the result is nil, the build process has failed.
+        (unless result
+          (let* ((store (twist-parse-search-store-from-error))
+                 (pname (twist-parse-pname-from-store store))
+                 (prefix (concat (replace-regexp-in-string "\\." "-"
+                                                           (twist-session-emacs-name))
+                                 "-"))
+                 (elisp-pname (when (string-prefix-p prefix pname)
+                                (string-remove-prefix prefix pname)))
+                 (dep (save-match-data
+                        (re-search-forward "dependencies of derivation" nil t))))
+            (twist-session--with-live-buffer nil
+              (push `(,elisp-pname
+                      ,store
+                      ,@(when dep
+                          (list :as-dependency-of ename)))
+                    twist-session-build-errors))
+            (if dep
+                (signal 'twist-session-dep-build-error (list elisp-pname store ename))
+              (signal 'twist-session-build-error (list ename store)))))
         result))))
 
 (defun twist-session-build-log (ename)
@@ -404,6 +432,8 @@ Optionally, you can override arguments passed to
 
 (defun twist-session--clear ()
   "Clear data stored in buffer-local variables."
+  (setq-local twist-session-build-errors nil)
+  (setq twist-session-emacs-name nil)
   (when twist-session-packages
     (clrhash twist-session-packages)
     (setq twist-session-packages nil)))
