@@ -66,6 +66,39 @@
         "type": "github"
       }
     },
+    "gnu-elpa": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1641922450,
+        "narHash": "sha256-daAJ7qB+edtGwwDifZ6i1YDTB/l1ZGQSwYgTq/IqAGM=",
+        "ref": "main",
+        "rev": "739d4baf7dde81f2a476c2210cdaab170be70e91",
+        "revCount": 322,
+        "type": "git",
+        "url": "https://git.savannah.gnu.org/git/emacs/elpa.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://git.savannah.gnu.org/git/emacs/elpa.git"
+      }
+    },
+    "makem": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1631182976,
+        "narHash": "sha256-SVL0Mc/ZCQw7gVf/sBFfbMZat2PCs1liAsbnlg0RhKU=",
+        "owner": "alphapapa",
+        "repo": "makem.sh",
+        "rev": "7096e02752c28ef6fd8bf1684e8d1069be4c6dd2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alphapapa",
+        "repo": "makem.sh",
+        "type": "github"
+      }
+    },
     "melpa": {
       "flake": false,
       "locked": {
@@ -100,6 +133,8 @@
     "root": {
       "inputs": {
         "flake-utils-plus": "flake-utils-plus",
+        "gnu-elpa": "gnu-elpa",
+        "makem": "makem",
         "melpa": "melpa",
         "nixpkgs": "nixpkgs",
         "twist": "twist",
@@ -112,12 +147,9 @@
         "fromElisp": "fromElisp"
       },
       "locked": {
-        "lastModified": 1642168313,
-        "narHash": "sha256-45eGEzpRQ1IgEEvlU1C0scbtaSu68Oz+gYeJDdO8zDE=",
-        "owner": "akirak",
-        "repo": "emacs-twist",
-        "rev": "732718fa0505b8d3df0a6e927bba7a8c7698b046",
-        "type": "github"
+        "narHash": "sha256-/19H76TJ2MM3agMXRkB3LwETKxPiucyCPJ8yKWiwW6Y=",
+        "path": "/home/akirakomamura/work/github.com/nix-libraries/emacs-twist",
+        "type": "path"
       },
       "original": {
         "owner": "akirak",
