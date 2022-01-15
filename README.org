@@ -1,29 +1,34 @@
 * Twist.el
 Twist.el is an Emacs frontend to [[https://github.com/akirak/emacs-twist][Twist]], an alternative machinery for Nix that builds Emacs Lisp packages.
-It lets you inspect (i.e. browse and review) packages in a configuration.
+It lets you inspect (i.e. browse and review) packages in an Emacs configuration managed with Twist.
 
 The goal of twist.el is as follows:
 
-- Improve user experiences of Twist. Help update packages in Twist securely and efficiently.
-- Provide a nice feedback loop for quality-checking Emacs Lisp packages. A user of Twist can be both a package user and a developer at the same time.
+- Improve the user experiences of Twist. Help update packages securely but efficiently.
+- Provide a nice feedback loop for quality checking of Emacs Lisp packages. A user of Twist can be both a package user and a developer at the same time.
 
-Twist and twist.el constitute a package manager for Emacs, which can be considered an alternative to Emacs package managers such as package.el, [[https://github.com/raxod502/straight.el][straight.el]], and [[https://github.com/emacscollective/borg][borg/emacscollective]].
+Twist and twist.el constitute a package manager for Emacs.
+It is an alternative to package.el, [[https://github.com/raxod502/straight.el][straight.el]], [[https://github.com/emacscollective/borg][borg]], etc.
+Unlike those, Twist builds everything in Nix. It requires no runtime but Nix.
 
-As a package manager, Twist is security-oriented compared to the others in the following aspects:
+Twist is currently an alpha, so is Twist.el.
+** Features
+*** Encouraging a secure workflow while allowing maximum flexilibility
+As a package manager, Twist is security-oriented in the following aspects:
 
-- Twist locks every Emacs package in a lock file. You can update individual packages rather than update all packages. See [[https://www.reddit.com/r/emacs/comments/81jqim/emacs_packages_security/][why this is important]].
-- Twist builds packages in a Nix sandbox. If there were some malicious code that is run during byte-compilation, it would probably fail in Twist because of restrictions of the sandbox. The same can be said for non-elisp code shipped with the package.
-- It *doesn't* load a package when you first add it to your configuration. This is less interactive, but is more secure. You could easily run static checkers on a produced artifact before you load it into your session.
+- Twist locks every Emacs package in a lock file. Rather than update all packages at once, it is recommended to update individual packages, and Twist allows that. See [[https://www.reddit.com/r/emacs/comments/81jqim/emacs_packages_security/][why this is important]].
+- Twist builds packages in a Nix sandbox. If there were some malicious code that is run during byte-compilation, it would probably fail because of its restrictions. The same can be said for build tasks for non-elisp code shipped with the package (e.g. dynamic libraries).
+- New packages won't be loaded until you start a new Emacs session or load/evaluate files manually. This is less interactive, but is more secure. For example, you could easily run static checkers on a produced artifact.
 
+In short, Twist combines the flexibility of straight.el and simplicity of borg but delegates all the heavy-lifting to Nix. The core library of Twist is a re-implementation of [[https://github.com/melpa/package-build][package-build]] in Nix.
+*** Inspecting from outside
 In Twist, a configuration is a Nix flake package. Twist.el can open any configuration that is a local flake, so you can inspect a configuration from outside.
 You can also browse a configuration of someone else without running it, if the configuration is in Twist.
 It has a potential to become a tinkering tool.
-
+*** Reusing a toolchain of Nix
 The lock file format of Twist is =flake.lock=, which is becoming common in Nix communities.
 Once we get an interactive Emacs frontend for updating =flake.lock=, you will be able to update packages in your Twist configuration efficiently.
-Until then, you can use =nix flake= command.
-
-Twist is currently an alpha, so is Twist.el.
+Until then, you can use =nix flake lock= command.
 ** Screenshots
 [[file:screenshots/twist-list-packages.png][file:screenshots/twist-list-packages.png]]
 
@@ -32,11 +37,12 @@ Twist is currently an alpha, so is Twist.el.
 Run =twist-connect= to open a flake package on your file system.
 Use =twist-list-packages= to browse packages, and use =twist-describe-package= to view information of a package.
 
-Twist.el relies on a =nix repl= session, and many commands are flaky at the moment.
-You may get a successful result by running the same command again.
-
 Edit your configuration, update the lock file, and run =twist-reload= to reflect changes.
+
+Twist.el relies on a =nix repl= session, and many commands are flaky at the moment.
+If it fails, you may get a successful result by running the same command again.
+Twist.el only interacts with read-only APIs, so it is mostly safe what ever you do with it, as long as Nix is reliable.
 *** Bookmark integration
 Twist.el integrates with the default bookmark system of Emacs.
-You can create a bookmark in the package list buffer and package buffers, and you can use the bookmark to revisit its original buffer.
-Bookmarks are specific to flakes.
+You can bookmark an Emacs configuration project, so you can check it later.
+Bookmarks can be created when you are browsing a package list or displaying a package.
