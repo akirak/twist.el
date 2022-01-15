@@ -358,8 +358,47 @@ Optionally, you can override arguments passed to
                   result)))
         (when (and (not result)
                    (re-search-forward (rx bol (* space) "error: builder for") nil t))
+          (twist-session--build-log ename)
           (signal 'twist-session-build-error (list ename)))
         result))))
+
+(defun twist-session-build-log (ename)
+  "Write a build log."
+  (interactive (completing-read "Package: " twist-session-build-errors))
+  (let ((log-buffer (get-buffer-create (format "*Twist Log<%s>*" ename))))
+    (with-current-buffer log-buffer
+      (erase-buffer))
+    (twist-session--with-live-buffer nil
+      (comint-redirect-setup log-buffer
+                             (current-buffer)
+                             "^nix-repl> ")
+      (add-function :around (process-filter (get-buffer-process (current-buffer)))
+                    #'comint-redirect-filter)
+
+      (insert (format ":log %s.elispPackages.%s" twist-session-eval-root ename))
+      (comint-send-input)
+      (twist-session--accept-output 100)
+
+      ;; It is likely that we get the following message and forced to return
+      ;; enter.
+      ;;
+      ;; > WARNING: terminal is not fully functional
+      (when (with-current-buffer log-buffer
+              (when (re-search-backward "^Press RETURN to continue" nil t)
+                (delete-region (1- (point)) (point-max))
+                t))
+        (comint-send-input)
+        (twist-session--accept-output 100))
+
+      (with-current-buffer log-buffer
+        (goto-char (point-min))
+        (save-excursion
+          (while (re-search-forward (rx (any "")) nil t)
+            (replace-match "")))
+        (save-excursion
+          (while (re-search-forward twist-session-ansi-escape-re nil t)
+            (replace-match "")))
+        (display-buffer (current-buffer))))))
 
 ;;;; Clear cache data
 
