@@ -96,10 +96,6 @@ information of a package."
              twist-package-other-files-section
              twist-package-reverse-deps-section))
 
-(defcustom twist-package-do-build t
-  "Whether to build the package when a package is displayed."
-  :type 'boolean)
-
 ;;;; Faces
 
 (defface twist-package-title-face
@@ -227,14 +223,6 @@ information of a package."
     (setq-local twist-package-outputs
                 (mapcar (lambda (x) (cons x nil))
                         (twist-session-package-outputs ename)))
-
-    (when twist-package-do-build
-      (condition-case-unless-debug err
-          (when (setq twist-package-outputs
-                      (twist-session-build-package ename))
-            (setq twist-package-build-status 'success))
-        (twist-session-build-errors
-         (setq twist-package-build-status (cons 'failure err)))))
 
     (magit-insert-section ('package)
       (run-hook-with-args 'twist-package-sections data))))
@@ -643,6 +631,14 @@ Otherwise, it inserts a text."
 ;;         (setq twist-package-build-status 'success
 ;;               twist-package-outputs result)
 ;;         (revert-buffer)))))
+
+(defun twist-package-build ()
+  (condition-case-unless-debug err
+      (when (setq twist-package-outputs
+                  (twist-session-build-package twist-package-ename))
+        (setq twist-package-build-status 'success))
+    (twist-session-build-errors
+     (setq twist-package-build-status (cons 'failure err)))))
 
 (defun twist-package-browse-output-dir (store &optional dir _fn)
   (dired (if dir
