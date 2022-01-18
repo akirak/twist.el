@@ -17,7 +17,7 @@ Twist is currently an alpha, so is Twist.el.
 As a package manager, Twist is security-oriented in the following aspects:
 
 - Twist locks every Emacs package in a lock file. Rather than update all packages at once, it is recommended to update individual packages, and Twist allows that. See [[https://www.reddit.com/r/emacs/comments/81jqim/emacs_packages_security/][why this is important]].
-- Twist builds packages in a Nix sandbox. If there were some malicious code that is run during byte-compilation, it would probably fail because of its restrictions. The same can be said for build tasks for non-elisp code shipped with the package (e.g. dynamic libraries).
+- Twist builds packages in a Nix sandbox. If there were some malicious code that is run during byte-compilation, it would probably fail because of its restrictions. The same can be said for build tasks for non-elisp code shipped with the package (e.g. dynamic modules).
 - New packages won't be loaded until you start a new Emacs session or load/evaluate files manually. This is less interactive, but is more secure. For example, you could easily run static checkers on a produced artifact.
 
 In short, Twist combines the flexibility of straight.el and simplicity of borg but delegates all the heavy-lifting to Nix. The core library of Twist is a re-implementation of [[https://github.com/melpa/package-build][package-build]] in Nix.
