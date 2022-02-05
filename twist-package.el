@@ -96,10 +96,6 @@ information of a package."
              twist-package-other-files-section
              twist-package-reverse-deps-section))
 
-(defcustom twist-package-do-build t
-  "Whether to build the package when a package is displayed."
-  :type 'boolean)
-
 ;;;; Faces
 
 (defface twist-package-title-face
@@ -221,15 +217,12 @@ information of a package."
     (twist-package--insert-contents (twist-session-package twist-package-ename))))
 
 (defun twist-package--insert-contents (data)
-  (let ((inhibit-read-only t))
+  (let ((inhibit-read-only t)
+        (ename (alist-get 'ename data)))
     (erase-buffer)
-
-    (when twist-package-do-build
-      (unless twist-package-outputs
-        (when (setq twist-package-outputs
-                    (with-timeout (0.3)
-                      (twist-session-build-package (alist-get 'ename data) #'identity)))
-          (setq twist-package-build-status 'success))))
+    (setq-local twist-package-outputs
+                (mapcar (lambda (x) (cons x nil))
+                        (twist-session-package-outputs ename)))
 
     (magit-insert-section ('package)
       (run-hook-with-args 'twist-package-sections data))))
@@ -391,8 +384,7 @@ This is a helper macro for traversing a tree."
           (insert-source-button "CONTRIBUTING" twist-package-contributing-regexp
                                 'contributing)))
 
-      (dolist (output (or twist-package-outputs
-                          (twist-session-package-outputs ename)))
+      (dolist (output twist-package-outputs)
         (unless (equal (car output) "out")
           (pcase-let ((`(,label ,subdir ,find-file-fn)
                        (pcase (car output)
@@ -409,7 +401,8 @@ This is a helper macro for traversing a tree."
 (defun twist-package-metadata-section (data)
   (let ((ename (twist-package-lookup ename data))
         (version (twist-package-lookup version data))
-        (last-modified (twist-package-lookup lastModified data))
+        (last-modified (twist-package-lookup (sourceInfo lastModified) data))
+        (revision (twist-package-lookup (sourceInfo rev) data))
         (origin (twist-package-lookup origin data))
         (homepage (twist-package-lookup (headers Homepage) data))
         (keywords (twist-package-lookup (headers Keywords) data))
@@ -429,36 +422,48 @@ This is a helper macro for traversing a tree."
            (insert " ")
            (insert-text-button url 'type 'twist-package-url
                                'help-args (list url)))))
-      ("Output:" (cdr (assoc "out" twist-package-outputs))
-       (let* ((dir (expand-file-name "share/emacs/site-lisp/"
-                                     (cdr (assoc "out" twist-package-outputs))))
-              (files (thread-last (directory-files-recursively dir ".+" nil nil 'symlinks)
-                       (mapcar (lambda (path) (string-remove-prefix dir path)))
-                       (cl-remove-if (lambda (name)
-                                       (string-match-p
-                                        (concat "^" twist-package-community-regexp "$")
-                                        name))))))
-         (when files
-           (pcase-dolist (`(,ext . ,files-by-ext)
-                          (seq-sort-by
-                           #'car #'string<
-                           (seq-group-by #'file-name-extension files)))
-             (pcase ext
-               ('()
-                (dolist (file files-by-ext)
-                  (insert-text-button file
-                                      'type 'twist-package-output
-                                      'help-args (list dir file))
-                  (insert " "))
-                (insert (string-join files-by-ext " ") " "))
-               ("elc")
-               (_
-                (insert (propertize ext 'help-echo
-                                    (string-join files-by-ext " "))
-                        (format "(%d) " (length files-by-ext)))))))
-         (insert-text-button "Browse"
-                             'type 'twist-package-output-dir
-                             'help-args (list dir))))
+
+      ;; These features depends on building in the REPL, so disable them for
+      ;; now.
+
+      ;; ("Build status:" twist-package-do-build
+      ;;  (pcase twist-package-build-status
+      ;;    ('success
+      ;;     (insert "Success"))
+      ;;    (`(failure ,_type ,dep . ,_)
+      ;;     (if (equal dep ename)
+      ;;         (insert "Failure")
+      ;;       (insert (format "Failure (because of %s)" dep))))))
+
+      ;; ("Output:" (cdr (assoc "out" twist-package-outputs))
+      ;;  (let* ((dir (expand-file-name "share/emacs/site-lisp/"
+      ;;                                (cdr (assoc "out" twist-package-outputs))))
+      ;;         (files (thread-last (directory-files-recursively dir ".+" nil nil 'symlinks)
+      ;;                  (mapcar (lambda (path) (string-remove-prefix dir path)))
+      ;;                  (cl-remove-if (lambda (name)
+      ;;                                  (string-match-p
+      ;;                                   (concat "^" twist-package-community-regexp "$")
+      ;;                                   name))))))
+      ;;    (when files
+      ;;      (pcase-dolist (`(,ext . ,files-by-ext)
+      ;;                     (seq-sort-by
+      ;;                      #'car #'string<
+      ;;                      (seq-group-by #'file-name-extension files)))
+      ;;        (pcase ext
+      ;;          ('()
+      ;;           (dolist (file files-by-ext)
+      ;;             (insert-text-button file
+      ;;                                 'type 'twist-package-output
+      ;;                                 'help-args (list dir file))
+      ;;             (insert " "))
+      ;;           (insert (string-join files-by-ext " ") " "))
+      ;;          (_
+      ;;           (insert (propertize ext 'help-echo
+      ;;                               (string-join files-by-ext " "))
+      ;;                   (format "(%d) " (length files-by-ext)))))))
+      ;;    (insert-text-button "Browse"
+      ;;                        'type 'twist-package-output-dir
+      ;;                        'help-args (list dir))))
       ("Source:" t
        (insert-text-button src 'type 'twist-package-store-path
                            'help-args (list src)))
@@ -467,6 +472,8 @@ This is a helper macro for traversing a tree."
                        (format " (%d days ago)"
                                (/ (- (float-time) (float-time last-modified))
                                   86400)))))
+      ("Revision" revision
+       (insert revision))
       ("Origin:" origin
        (insert (twist-flake-alist-to-url origin)))
       ("Home page:" homepage
@@ -625,13 +632,21 @@ Otherwise, it inserts a text."
       (epkg-list-packages-by-author author-or-email)
     (user-error "Package epkg is required to use this feature")))
 
-(defun twist-package-build (ename dest-buffer)
-  (twist-session-build-package ename
-    (lambda (result)
-      (with-current-buffer dest-buffer
-        (setq twist-package-build-status 'success
-              twist-package-outputs result)
-        (revert-buffer)))))
+;; (defun twist-package-build (ename dest-buffer)
+;;   (twist-session-build-package ename
+;;     (lambda (result)
+;;       (with-current-buffer dest-buffer
+;;         (setq twist-package-build-status 'success
+;;               twist-package-outputs result)
+;;         (revert-buffer)))))
+
+(defun twist-package-build ()
+  (condition-case-unless-debug err
+      (when (setq twist-package-outputs
+                  (twist-session-build-package twist-package-ename))
+        (setq twist-package-build-status 'success))
+    (twist-session-build-errors
+     (setq twist-package-build-status (cons 'failure err)))))
 
 (defun twist-package-browse-output-dir (store &optional dir _fn)
   (dired (if dir

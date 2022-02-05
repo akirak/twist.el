@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'twist-parse)
+
 (require 'nix)
 (require 'comint)
 (require 'map)
@@ -57,6 +59,8 @@
 (defvar-local twist-session-flake nil)
 (defvar-local twist-session-eval-root nil)
 (defvar-local twist-session-loaded-time nil)
+(defvar-local twist-session-build-errors nil)
+(defvar-local twist-session-emacs-name nil)
 
 (defun twist-session--make-eval-root (system package)
   (format "outputs.packages.%s.%s"
@@ -104,10 +108,14 @@
 
 (defun twist-session-reopen ()
   "Re-open the previously running session."
-  (if (twist-session-process-live-p)
-      (user-error "There is a live session of Twist")
+  (cond
+   ((twist-session-process-live-p)
+    (user-error "There is a live session of Twist"))
+   (twist-session-buffer
     (twist-session-open (twist-session-flake)
-                        (twist-session-config-package))))
+                        (twist-session-config-package)))
+   (t
+    (user-error "No information on the previous session is available"))))
 
 (defmacro twist-session-ensure (&rest progn)
   `(if (twist-session-process-live-p)
@@ -227,6 +235,7 @@
     ;; nix-repl echoes every user input to the terminal. Find the end of the
     ;; input and move the point to right after the echoed input.
     (search-forward input)
+
     ;; Skip whitespaces
     (when (looking-at (rx (+ space)))
       (goto-char (match-end 0)))
@@ -291,6 +300,10 @@ Optionally, you can override arguments passed to
         (setq twist-session-packages hash)
         alist)))
 
+(defun twist-session-emacs-name ()
+  (twist-session--with-live-buffer nil
+    (twist-session--eval (format "%s.emacs.name" twist-session-eval-root))))
+
 (defun twist-session-package (ename)
   "Return a list of elisp packages in the configuration."
   (gethash (cl-etypecase ename
@@ -321,7 +334,13 @@ Optionally, you can override arguments passed to
 
 (defvar twist-session-background-task nil)
 
-(defun twist-session-build-package (ename callback)
+(define-error 'twist-session-build-error "Package failed to build"
+  'twist-session-build-errors)
+
+(define-error 'twist-session-dep-build-error "Package dependency failed to build"
+  'twist-session-build-errors)
+
+(defun twist-session-build-package (ename)
   (declare (indent 1))
   (if twist-session-background-task
       (user-error "Build in progress")
@@ -348,13 +367,73 @@ Optionally, you can override arguments passed to
                                     nil t)
             (push (cons (match-string 1)
                         (match-string 2))
-                  result))))
-      (funcall callback result))))
+                  result)))
+        ;; If the result is nil, the build process has failed.
+        (unless result
+          (let* ((store (twist-parse-search-store-from-error))
+                 (pname (twist-parse-pname-from-store store))
+                 (prefix (concat (replace-regexp-in-string "\\." "-"
+                                                           (twist-session-emacs-name))
+                                 "-"))
+                 (elisp-pname (when (string-prefix-p prefix pname)
+                                (string-remove-prefix prefix pname)))
+                 (dep (save-match-data
+                        (re-search-forward "dependencies of derivation" nil t))))
+            (twist-session--with-live-buffer nil
+              (push `(,elisp-pname
+                      ,store
+                      ,@(when dep
+                          (list :as-dependency-of ename)))
+                    twist-session-build-errors))
+            (if dep
+                (signal 'twist-session-dep-build-error (list elisp-pname store ename))
+              (signal 'twist-session-build-error (list ename store)))))
+        result))))
+
+(defun twist-session-build-log (ename)
+  "Write a build log."
+  (interactive (completing-read "Package: " twist-session-build-errors))
+  (let ((log-buffer (get-buffer-create (format "*Twist Log<%s>*" ename))))
+    (with-current-buffer log-buffer
+      (erase-buffer))
+    (twist-session--with-live-buffer nil
+      (comint-redirect-setup log-buffer
+                             (current-buffer)
+                             "^nix-repl> ")
+      (add-function :around (process-filter (get-buffer-process (current-buffer)))
+                    #'comint-redirect-filter)
+
+      (insert (format ":log %s.elispPackages.%s" twist-session-eval-root ename))
+      (comint-send-input)
+      (twist-session--accept-output 100)
+
+      ;; It is likely that we get the following message and forced to return
+      ;; enter.
+      ;;
+      ;; > WARNING: terminal is not fully functional
+      (when (with-current-buffer log-buffer
+              (when (re-search-backward "^Press RETURN to continue" nil t)
+                (delete-region (1- (point)) (point-max))
+                t))
+        (comint-send-input)
+        (twist-session--accept-output 100))
+
+      (with-current-buffer log-buffer
+        (goto-char (point-min))
+        (save-excursion
+          (while (re-search-forward (rx (any "")) nil t)
+            (replace-match "")))
+        (save-excursion
+          (while (re-search-forward twist-session-ansi-escape-re nil t)
+            (replace-match "")))
+        (display-buffer (current-buffer))))))
 
 ;;;; Clear cache data
 
 (defun twist-session--clear ()
   "Clear data stored in buffer-local variables."
+  (setq-local twist-session-build-errors nil)
+  (setq twist-session-emacs-name nil)
   (when twist-session-packages
     (clrhash twist-session-packages)
     (setq twist-session-packages nil)))
@@ -367,6 +446,15 @@ Optionally, you can override arguments passed to
       (with-current-buffer twist-session-buffer
         (twist-session--send-command ":q")
         (twist-session--clear)
+        (ignore-errors
+          ;; Close buffers
+          (dolist (buf (internal-complete-buffer
+                        "*twist"
+                        (lambda (name)
+                          (not (equal (if (consp name) (car name) name)
+                                      (buffer-name twist-session-buffer))))
+                        t))
+            (kill-buffer buf)))
         (message "Finished the twist session"))
     (unless no-error
       (user-error "Not connected"))))

@@ -32,6 +32,7 @@
 
 (require 'twist-session)
 (require 'twist-bookmark)
+(require 'twist-package)
 
 (require 'tabulated-list)
 (require 'map)

@@ -68,6 +68,12 @@ the variable is nil, the user will choose a flake interactively."
   (twist-session-close))
 
 (defun twist-reconnect ()
+  "Restart the previously opened flake.
+
+This function starts a session on a flake which was previously
+visited, if there is no live session.
+
+If there is an active session, this function fails."
   (interactive)
   (twist-session-reopen))
 
