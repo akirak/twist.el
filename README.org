@@ -1,4 +1,6 @@
 * Twist.el
+*Twist.el heavily depends on nix repl. At present, there is a possibility that this Nix feature might be dropped (see [[https://github.com/NixOS/nix/pull/5684][NixOS/nix#5684]]). This package is highly experimental for the moment.*
+
 Twist.el is an Emacs frontend to [[https://github.com/akirak/emacs-twist][Twist]], an alternative machinery for Nix that builds Emacs Lisp packages.
 It lets you inspect (i.e. browse and review) packages in an Emacs configuration managed with Twist.
 
@@ -10,8 +12,6 @@ The goal of twist.el is as follows:
 Twist and twist.el constitute a package manager for Emacs.
 It is an alternative to package.el, [[https://github.com/raxod502/straight.el][straight.el]], [[https://github.com/emacscollective/borg][borg]], etc.
 Unlike those, Twist builds everything inside Nix. And it requires almost no runtime code but Nix.
-
-Twist is currently an alpha, so is Twist.el.
 ** Features
 *** Encourage a secure workflow while allowing maximum flexilibility
 As a package manager, Twist is security-oriented in the following aspects:
