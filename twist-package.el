@@ -421,43 +421,48 @@ This is a helper macro for traversing a tree."
            (insert " ")
            (insert-text-button url 'type 'twist-package-url
                                'help-args (list url)))))
-      ("Build status:" twist-package-do-build
-       (pcase twist-package-build-status
-         ('success
-          (insert "Success"))
-         (`(failure ,_type ,dep . ,_)
-          (if (equal dep ename)
-              (insert "Failure")
-            (insert (format "Failure (because of %s)" dep))))))
-      ("Output:" (cdr (assoc "out" twist-package-outputs))
-       (let* ((dir (expand-file-name "share/emacs/site-lisp/"
-                                     (cdr (assoc "out" twist-package-outputs))))
-              (files (thread-last (directory-files-recursively dir ".+" nil nil 'symlinks)
-                       (mapcar (lambda (path) (string-remove-prefix dir path)))
-                       (cl-remove-if (lambda (name)
-                                       (string-match-p
-                                        (concat "^" twist-package-community-regexp "$")
-                                        name))))))
-         (when files
-           (pcase-dolist (`(,ext . ,files-by-ext)
-                          (seq-sort-by
-                           #'car #'string<
-                           (seq-group-by #'file-name-extension files)))
-             (pcase ext
-               ('()
-                (dolist (file files-by-ext)
-                  (insert-text-button file
-                                      'type 'twist-package-output
-                                      'help-args (list dir file))
-                  (insert " "))
-                (insert (string-join files-by-ext " ") " "))
-               (_
-                (insert (propertize ext 'help-echo
-                                    (string-join files-by-ext " "))
-                        (format "(%d) " (length files-by-ext)))))))
-         (insert-text-button "Browse"
-                             'type 'twist-package-output-dir
-                             'help-args (list dir))))
+
+      ;; These features depends on building in the REPL, so disable them for
+      ;; now.
+
+      ;; ("Build status:" twist-package-do-build
+      ;;  (pcase twist-package-build-status
+      ;;    ('success
+      ;;     (insert "Success"))
+      ;;    (`(failure ,_type ,dep . ,_)
+      ;;     (if (equal dep ename)
+      ;;         (insert "Failure")
+      ;;       (insert (format "Failure (because of %s)" dep))))))
+
+      ;; ("Output:" (cdr (assoc "out" twist-package-outputs))
+      ;;  (let* ((dir (expand-file-name "share/emacs/site-lisp/"
+      ;;                                (cdr (assoc "out" twist-package-outputs))))
+      ;;         (files (thread-last (directory-files-recursively dir ".+" nil nil 'symlinks)
+      ;;                  (mapcar (lambda (path) (string-remove-prefix dir path)))
+      ;;                  (cl-remove-if (lambda (name)
+      ;;                                  (string-match-p
+      ;;                                   (concat "^" twist-package-community-regexp "$")
+      ;;                                   name))))))
+      ;;    (when files
+      ;;      (pcase-dolist (`(,ext . ,files-by-ext)
+      ;;                     (seq-sort-by
+      ;;                      #'car #'string<
+      ;;                      (seq-group-by #'file-name-extension files)))
+      ;;        (pcase ext
+      ;;          ('()
+      ;;           (dolist (file files-by-ext)
+      ;;             (insert-text-button file
+      ;;                                 'type 'twist-package-output
+      ;;                                 'help-args (list dir file))
+      ;;             (insert " "))
+      ;;           (insert (string-join files-by-ext " ") " "))
+      ;;          (_
+      ;;           (insert (propertize ext 'help-echo
+      ;;                               (string-join files-by-ext " "))
+      ;;                   (format "(%d) " (length files-by-ext)))))))
+      ;;    (insert-text-button "Browse"
+      ;;                        'type 'twist-package-output-dir
+      ;;                        'help-args (list dir))))
       ("Source:" t
        (insert-text-button src 'type 'twist-package-store-path
                            'help-args (list src)))
