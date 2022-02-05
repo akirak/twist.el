@@ -401,7 +401,8 @@ This is a helper macro for traversing a tree."
 (defun twist-package-metadata-section (data)
   (let ((ename (twist-package-lookup ename data))
         (version (twist-package-lookup version data))
-        (last-modified (twist-package-lookup lastModified data))
+        (last-modified (twist-package-lookup (sourceInfo lastModified) data))
+        (revision (twist-package-lookup (sourceInfo rev) data))
         (origin (twist-package-lookup origin data))
         (homepage (twist-package-lookup (headers Homepage) data))
         (keywords (twist-package-lookup (headers Keywords) data))
@@ -471,6 +472,8 @@ This is a helper macro for traversing a tree."
                        (format " (%d days ago)"
                                (/ (- (float-time) (float-time last-modified))
                                   86400)))))
+      ("Revision" revision
+       (insert revision))
       ("Origin:" origin
        (insert (twist-flake-alist-to-url origin)))
       ("Home page:" homepage
